@@ -173,6 +173,8 @@ func set_simulation_particles(val: int) -> void:
 @export var apply_collision: bool = false
 @export_enum(LAYERS_3D_PHYSICS) var collision_mask: int = 1
 
+@export var default_material : BaseMaterial3D = preload("res://addons/rope/rope_material.tres")
+
 @onready var space_state = get_world_3d().direct_space_state
 
 var time: float = 0.0
@@ -210,7 +212,7 @@ func add_particle_at_end(adjust_length: bool) -> void:
 
 # unused func draws simple lines between particles
 func _draw_linear_curve():
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, default_material)
 	for i in range(simulation_particles - 1):
 		var curr_pos: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var curr_binorm: Vector3 = particle_data.binormals[i]
@@ -253,7 +255,7 @@ func _draw_interval(data: PackedVector3Array, camera_position: Vector3, step: fl
 	pass
 
 func _draw_catmull_curve_baked() -> void:
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, default_material)
 	
 	# do drawing
 	var camera = get_viewport().get_camera_3d()
@@ -296,7 +298,7 @@ func _draw_catmull_curve_baked() -> void:
 
 # unused func use catmull_curve_baked instead, it is faster
 func _draw_catmull_curve() -> void:
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, default_material)
 	
 	# do drawing
 	var camera = get_viewport().get_camera_3d()
@@ -403,7 +405,7 @@ func _destroy_rope() -> void:
 	simulation_particles = 0
 
 func _draw_rope_particles() -> void:
-	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, default_material)
 	for i in range(simulation_particles):
 		var pos_curr: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var tangent: Vector3 = particle_data.tangents[i]
