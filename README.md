@@ -1,5 +1,7 @@
 # Godot Verlet Rope
 
+**CURRENTLY WORK IN PROGRESS AS OF 2021-12-19**
+
 A fast implementation of verlet integration based rope pysics, similar to the one seen in half life 2.
 
 ![](https://github.com/2nafish117/godot-verlet-rope/blob/master/images/Screenshot.png)
