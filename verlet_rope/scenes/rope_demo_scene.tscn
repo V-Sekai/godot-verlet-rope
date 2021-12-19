@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3 uid="uid://c65cr52ys7spa"]
+
+[ext_resource type="PackedScene" path="res://addons/rope/verlet_rope.tscn" id="1_ywedt"]
+[ext_resource type="Material" uid="uid://bbatuvqq1yjxn" path="res://addons/rope/rope_material.tres" id="2_a37wl"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_gitj7"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_f3oyg"]
+
+[sub_resource type="OpenSimplexNoise" id="OpenSimplexNoise_4u1hf"]
+seed = 3
+
+[node name="Node3D" type="Node3D"]
+
+[node name="VerletRope" parent="." instance=ExtResource( "1_ywedt" )]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.36883, 0, 0)
+mesh = SubResource( "BoxMesh_gitj7" )
+surface_material_override/0 = null
+script = null
+
+[node name="VerletRope2" parent="." instance=ExtResource( "1_ywedt" )]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.89118, -0.533123, -0.404568)
+mesh = SubResource( "ImmediateMesh_f3oyg" )
+surface_material_override/0 = null
+attach_start = true
+attach_end_to = NodePath("../VerletRope")
+rope_length = 5.0
+rope_width = 0.06
+simulation_particles = 9
+iterations = 2
+preprocess_iterations = 5
+simulation_rate = 60
+stiffness = 1.057
+simulate = true
+draw = true
+subdiv_lod_distance = 1.0
+apply_gravity = true
+gravity = Vector3(0, -9.8, 0)
+gravity_scale = 1.0
+apply_wind = false
+wind_noise = SubResource( "OpenSimplexNoise_4u1hf" )
+wind = Vector3(1, 0, 0)
+wind_scale = 10.0
+apply_damping = true
+damping_factor = 1.0
+apply_collision = false
+collision_mask = 1
+default_material = ExtResource( "2_a37wl" )
