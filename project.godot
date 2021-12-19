@@ -21,7 +21,6 @@ _global_script_class_icons={
 [application]
 
 config/name="godot-verlet-rope"
-run/main_scene="res://verlet_rope/test_scenes/rope_test.tscn"
 config/icon="res://icon.png"
 config/features=PackedStringArray("4.0")
 
