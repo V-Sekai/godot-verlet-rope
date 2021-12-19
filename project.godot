@@ -17,7 +17,7 @@ _global_script_classes=[ {
 "base": "ImmediateGeometry",
 "class": "GDVerletRope",
 "language": "GDScript",
-"path": "res://VerletRope/GDVerletRope.gd"
+"path": "res://VerletRope/verlet_rope.gd"
 } ]
 _global_script_class_icons={
 "DbgCamera": "",
