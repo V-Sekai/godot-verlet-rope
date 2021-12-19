@@ -3,7 +3,8 @@ extends MeshInstance3D
 class_name Rope3D
 
 func _enter_tree():
-	set_mesh(ImmediateMesh.new())
+	if not get_mesh():
+		set_mesh(ImmediateMesh.new())
 
 class RopeParticleData:
 	var pos_curr: PackedVector3Array
