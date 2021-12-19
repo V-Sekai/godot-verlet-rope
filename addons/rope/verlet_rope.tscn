@@ -1,8 +1,7 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=2 format=3 uid="uid://djp54qk551qsw"]
 
-[ext_resource path="res://addons/rope/verlet_rope.gd" type="Script" id=1]
-[ext_resource path="res://addons/rope/rope_material.tres" type="Material" id=2]
+[ext_resource type="Script" path="res://addons/rope/verlet_rope.gd" id="1_kfmrg"]
 
-[node name="GDVerletRope" type="ImmediateGeometry"]
-material_override = ExtResource( 2 )
-script = ExtResource( 1 )
+[node name="VerletRope" type="MeshInstance3D"]
+script = ExtResource( "1_kfmrg" )
+attach_end_to = NodePath("")

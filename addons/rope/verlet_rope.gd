@@ -1,17 +1,17 @@
-tool
-extends ImmediateGeometry
+@tool
+extends ImmediateMesh
 class_name GDVerletRope
 
 
 class RopeParticleData:
-	var pos_curr: PoolVector3Array
-	var pos_prev: PoolVector3Array
-	var accel: PoolVector3Array
+	var pos_curr: PackedVector3Array
+	var pos_prev: PackedVector3Array
+	var accel: PackedVector3Array
 	var is_attached: Array
 	
-	var tangents: PoolVector3Array
-	var normals: PoolVector3Array
-	var binormals: PoolVector3Array
+	var tangents: PackedVector3Array
+	var normals: PackedVector3Array
+	var binormals: PackedVector3Array
 
 	func is_empty() -> bool:
 		return len(pos_curr) == 0
@@ -30,22 +30,22 @@ class RopeParticleData:
 		resize(3)
 
 # t = 0.0, 1.0
-static func catmull_interpolate_in_step_one(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PoolVector3Array:
+static func catmull_interpolate_in_step_one(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PackedVector3Array:
 	var m1: Vector3 = 0.5 * (p2 - p0)
 	var m2: Vector3 = 0.5 * (p3 - p1)
 	# order point, tangent ...
-	return PoolVector3Array([
+	return PackedVector3Array([
 		p1, m1.normalized(), # t = 0.0
 		p2, m2.normalized() # t = 1.0
 	])
 
 # t = 0.0, 0.25, 0.5, 0.75, 1.0
-static func catmull_interpolate_in_step_fourths(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PoolVector3Array:
+static func catmull_interpolate_in_step_fourths(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PackedVector3Array:
 	var m1: Vector3 = 0.5 * (p2 - p0)
 	var m2: Vector3 = 0.5 * (p3 - p1)
 
 	# order point, tangent ... 
-	return PoolVector3Array([
+	return PackedVector3Array([
 		p1, m1.normalized(), # t = 0.0
 		0.84375 * p1 + 0.15625 * p2 + 0.140625 * m1 - 0.046875 * m2, (-1.125 * p1 + 1.125 * p2 + 0.1875 * m1 - 0.3125 * m2).normalized(), # t = 0.25
 		0.5 * p1 + 0.5 * p2 + 0.125 * m1 - 0.125 * m2, (-1.5 * p1 + 1.5 * p2 - 0.25 * m1 - 0.25 * m2).normalized(), # t = 0.5
@@ -54,12 +54,12 @@ static func catmull_interpolate_in_step_fourths(p0: Vector3, p1: Vector3, p2: Ve
 	])
 
 # t = 0.0, 0.333, 0.6666, 1.0
-static func catmull_interpolate_in_step_thirds(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PoolVector3Array:
+static func catmull_interpolate_in_step_thirds(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PackedVector3Array:
 	var m1: Vector3 = 0.5 * (p2 - p0)
 	var m2: Vector3 = 0.5 * (p3 - p1)
 
 	# order point, tangent ...
-	return PoolVector3Array([
+	return PackedVector3Array([
 		p1, m1.normalized(), # t = 0.0
 		0.7407407407407407 * p1 + 0.25925925925925924 * p2 + 0.14814814814814814 * m1 - 0.07407407407407407 * m2, (-1.3333333333333335 * p1 + 1.3333333333333335 * p2 - 0.3333333333333333 * m2).normalized(), # t = 0.33 
 		0.2592592592592593 * p1 + 0.7407407407407407 * p2 + 0.07407407407407407 * m1 - 0.14814814814814814 * m2, (-1.3333333333333335 * p1 + 1.3333333333333335 * p2 - 0.33333333333333326 * m1).normalized(), # t = 0.66
@@ -67,19 +67,19 @@ static func catmull_interpolate_in_step_thirds(p0: Vector3, p1: Vector3, p2: Vec
 	])
 
 # t = 0.0, 0.5, 1.0
-static func catmull_interpolate_in_step_halfs(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PoolVector3Array:
+static func catmull_interpolate_in_step_halfs(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3) -> PackedVector3Array:
 	var m1: Vector3 = 0.5 * (p2 - p0)
 	var m2: Vector3 = 0.5 * (p3 - p1)
 
 	# order point, tangent
-	return PoolVector3Array([
+	return PackedVector3Array([
 		p1, m1.normalized(), # t = 0.0
 		0.5 * p1 + 0.5 * p2 + 0.125 * m1 - 0.125 * m2, (-1.5 * p1 + 1.5 * p2 - 0.25 * m1 - 0.25 * m2).normalized(), # t = 0.5
 		p2, m2.normalized() # t = 1.0
 	])
 
 # fast? catmull spline
-static func catmull_interpolate(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: float) -> PoolVector3Array:
+static func catmull_interpolate(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: float) -> PackedVector3Array:
 	var t_sqr: float = t * t
 	var t_cube: float = t_sqr * t
 
@@ -91,7 +91,7 @@ static func catmull_interpolate(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vecto
 	var c: Vector3 = m1;
 	var d: Vector3 = p1;
 	# order point, tangent
-	return PoolVector3Array([a * t_cube + b * t_sqr + c * t + d, (3.0 * a * t_sqr + 2.0 * b * t + c).normalized()])
+	return PackedVector3Array([a * t_cube + b * t_sqr + c * t + d, (3.0 * a * t_sqr + 2.0 * b * t + c).normalized()])
 
 
 # references: 
@@ -108,13 +108,19 @@ const COS_20_DEG: float = cos(deg2rad(20))
 const COS_25_DEG: float = cos(deg2rad(25))
 const COS_30_DEG: float = cos(deg2rad(30))
 
-export(bool) var attach_start: bool = true setget set_attach_start
+@export var attach_start: bool = true:
+	set(value):
+		set_attach_start(value)
+		
 func set_attach_start(value: bool) -> void:
 	attach_start = value
 	if particle_data:
 		particle_data.is_attached[0] = value
 
-export(NodePath) var attach_end_to: NodePath setget set_attach_end_to
+@export var attach_end_to: NodePath:
+	set(value):
+		set_attach_end_to(value)
+		
 func set_attach_end_to(val: NodePath) -> void:
 	attach_end_to = val 
 	if particle_data != null:
@@ -129,47 +135,49 @@ func is_attached_end() -> bool:
 func is_attached_start() -> bool:
 	return attach_start
 
-export(float) var rope_length: float = 5.0
-export(float) var rope_width := 0.07
+@export var rope_length: float = 5.0
+@export var rope_width : float = 0.07
  
-export(int, 3, 200) var simulation_particles: int = 9 setget set_simulation_particles
+@export_range(3, 200) var simulation_particles: int = 9:
+	set(value):
+		set_simulation_particles(value)
+		
 func set_simulation_particles(val: int) -> void:
 	simulation_particles = val
 	if particle_data:
 		particle_data.resize(simulation_particles)
 		_create_rope()
 
-export(int) var iterations: int = 2 # low value = more sag, high value = less sag
-export(int, 0, 120) var preprocess_iterations: int = 5
-export(int, 10, 60) var simulation_rate: int = 60
-export(float, 0.01, 1.5) var stiffness = 0.9 # low value = elastic, high value = taut rope
+@export var iterations: int = 2 # low value = more sag, high value = less sag
+@export_range(0, 120) var preprocess_iterations: int = 5
+@export_range(10, 60) var simulation_rate: int = 60
+@export_range(0.01, 1.5) var stiffness = 0.9 # low value = elastic, high value = taut rope
 
-export(bool) var simulate: bool = true
-export(bool) var draw: bool = true
-export(float) var subdiv_lod_distance = 15.0 # switches to only drawing quads between particles at this point
+@export var simulate: bool = true
+@export var draw: bool = true
+@export var subdiv_lod_distance = 15.0 # switches to only drawing quads between particles at this point
 
-export(bool) var apply_gravity: bool = true
-export(Vector3) var gravity: Vector3 = Vector3.DOWN * 9.8
-export(float) var gravity_scale: float = 1.0
+@export var apply_gravity: bool = true
+@export var gravity: Vector3 = Vector3.DOWN * 9.8
+@export var gravity_scale: float = 1.0
 
-export(bool) var apply_wind: bool = false
-export(OpenSimplexNoise) var wind_noise: OpenSimplexNoise
-export(Vector3) var wind: Vector3 = Vector3(1.0, 0.0, 0.0)
-export(float) var wind_scale: float = 10.0
+@export var apply_wind: bool = false
+@export var wind_noise: OpenSimplexNoise
+@export var wind: Vector3 = Vector3(1.0, 0.0, 0.0)
+@export var wind_scale: float = 10.0
 
-export(bool) var apply_damping: bool = true
-export(float) var damping_factor: float = 100.0
+@export var apply_damping: bool = true
+@export var damping_factor: float = 100.0
 
-export(bool) var apply_collision: bool = false
-export(int, LAYERS_3D_PHYSICS) var collision_mask: int = 1
+@export var apply_collision: bool = false
+@export_enum(LAYERS_3D_PHYSICS) var collision_mask: int = 1
 
 var time: float = 0.0
 var particle_data: RopeParticleData
-var visibility_notifier: VisibilityNotifier
-var collision_check_param: PhysicsShapeQueryParameters
-var collision_check_box: BoxShape
+var collision_check_param: PhysicsShapeQueryParameters3D
+var collision_check_box: BoxShape3D
 
-onready var space_state = get_world().direct_space_state
+@onready var space_state = PhysicsDirectSpaceState3D.new()
 
 func get_segment_length() -> float:
 	return rope_length / (simulation_particles - 1)
@@ -201,7 +209,7 @@ func add_particle_at_end(adjust_length: bool) -> void:
 
 # unused func draws simple lines between particles
 func _draw_linear_curve():
-	begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in range(simulation_particles - 1):
 		var curr_pos: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var curr_binorm: Vector3 = particle_data.binormals[i]
@@ -216,10 +224,10 @@ func _draw_linear_curve():
 			curr_pos + curr_binorm * rope_width], 
 			-curr_binorm, particle_data.tangents[i], 
 			0.0, 1.0,
-			Color.black)
-	end()
+			Color.BLACK)
+	suface_end()
 
-func _draw_interval(data: PoolVector3Array, camera_position: Vector3, step: float, tangent: Vector3) -> void:
+func _draw_interval(data: PackedVector3Array, camera_position: Vector3, step: float, tangent: Vector3) -> void:
 	var t: float = 0.0
 	for i in range(0, data.size() - 2, 2):
 		var curr_pos: Vector3 = data[i] - global_transform.origin
@@ -239,12 +247,12 @@ func _draw_interval(data: PoolVector3Array, camera_position: Vector3, step: floa
 			curr_pos + curr_binorm * rope_width], 
 			-curr_binorm, tangent, 
 			t, t + step,
-			Color.black)
+			Color.BLACK)
 		t += step
 	pass
 
 func _draw_catmull_curve_baked() -> void:
-	begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	
 	# do drawing
 	var camera = get_viewport().get_camera()
@@ -257,7 +265,7 @@ func _draw_catmull_curve_baked() -> void:
 		var p3: Vector3 = particle_data.pos_curr[i + 1] + particle_data.tangents[i + 1] * get_segment_length() if i == simulation_particles - 2 else particle_data.pos_curr[i + 2]
 		
 		var cam_dist_particle: Vector3 = camera_position - p1
-		var interval_data: PoolVector3Array
+		var interval_data: PackedVector3Array
 		var rope_draw_subdivs: float = 1.0
 		# dont subdivide if farther than subdiv_lod_distance units from camera
 		if cam_dist_particle.length_squared() <= subdiv_lod_distance * subdiv_lod_distance:
@@ -283,11 +291,11 @@ func _draw_catmull_curve_baked() -> void:
 			interval_data = catmull_interpolate_in_step_one(p0, p1, p2, p3)
 		
 		_draw_interval(interval_data, camera_position, rope_draw_subdivs, particle_data.tangents[i])
-	end()
+	surface_end()
 
 # unused func use catmull_curve_baked instead, it is faster
 func _draw_catmull_curve() -> void:
-	begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	
 	# do drawing
 	var camera = get_viewport().get_camera()
@@ -316,8 +324,8 @@ func _draw_catmull_curve() -> void:
 		var t = 0.0
 		var step = rope_draw_subdivs
 		while t <= 1.0:
-			var point1_data: PoolVector3Array = catmull_interpolate(p0, p1, p2, p3, t)
-			var point2_data: PoolVector3Array = catmull_interpolate(p0, p1, p2, p3, min(t + step, 1.0))
+			var point1_data: PackedVector3Array = catmull_interpolate(p0, p1, p2, p3, t)
+			var point2_data: PackedVector3Array = catmull_interpolate(p0, p1, p2, p3, min(t + step, 1.0))
 			
 			var curr_pos: Vector3 = point1_data[0] - global_transform.origin
 			var curr_tangent: Vector3 = point1_data[1]
@@ -336,12 +344,12 @@ func _draw_catmull_curve() -> void:
 				curr_pos + curr_binorm * rope_width], 
 				-curr_binorm, particle_data.tangents[i], 
 				t, t + step,
-				Color.black)
+				Color.BLACK)
 			t += step
-	end()
+	surface_end()
 
 func _calculate_rope_orientation_with_camera() -> void:
-	var camera: Camera = get_viewport().get_camera()
+	var camera: Camera3D = get_viewport().get_camera()
 	var camera_pos: Vector3 = camera.global_transform.origin if camera else Vector3.ZERO
 	particle_data.tangents[0] = (particle_data.pos_curr[1] - particle_data.pos_curr[0]).normalized()
 	particle_data.normals[0] = (particle_data.pos_curr[0] - camera_pos).normalized()
@@ -394,7 +402,7 @@ func _destroy_rope() -> void:
 	simulation_particles = 0
 
 func _draw_rope_particles() -> void:
-	begin(Mesh.PRIMITIVE_LINES)
+	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in range(simulation_particles):
 		var pos_curr: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var tangent: Vector3 = particle_data.tangents[i]
@@ -414,7 +422,7 @@ func _draw_rope_particles() -> void:
 		add_vertex(pos_curr)
 		add_vertex(pos_curr + 0.3 * binormal)
 		#material_override.set("vertex_color_use_as_albedo", false)
-	end()
+	surface_end()
 
 # give in clockwise order, or maybe anticlockwise?
 func _draw_quad(vs: Array, n: Vector3, _t: Vector3, uvx0: float, uvx1: float, c: Color) -> void:
@@ -479,10 +487,16 @@ func _apply_constraints() -> void:
 		var aabb: AABB = get_aabb()
 		collision_check_box.extents = aabb.size * 0.5
 		collision_check_param.transform.origin = global_transform.origin + aabb.position + aabb.size * 0.5
+		
 		var colliders: Array = space_state.intersect_shape(collision_check_param, 1)
 		if len(colliders) >= 1:
 			for i in range(simulation_particles - 1):
-				var result: Dictionary = space_state.intersect_ray(particle_data.pos_curr[i] + prev_normal * 0.4, particle_data.pos_curr[i + 1], [], collision_mask)
+				var partical_params = PhysicsRayQueryParameters3D.new()
+				partical_params.from = particle_data.pos_curr[i] + prev_normal * 0.4
+				partical_params.to = particle_data.pos_curr[i + 1]
+				partical_params.exclude = []
+				partical_params.collision_mask = collision_mask
+				var result: Dictionary = space_state.intersect_ray(partical_params)
 				if result:
 					prev_normal = result.normal
 					var ydiff: Vector3 = result.position - particle_data.pos_curr[i + 1]
@@ -491,31 +505,15 @@ func _apply_constraints() -> void:
 					particle_data.pos_curr[i + 1] += ydiff
 					particle_data.pos_prev[i + 1] = particle_data.pos_curr[i + 1]
 
-func _get_configuration_warning() -> String:
-	visibility_notifier = null
-	for c in get_children():
-		if c is VisibilityNotifier:
-			visibility_notifier = c
-			break
-	if visibility_notifier == null:
-		return "Consider adding a VisibilityNotifier as a child for performance (it's bounds is automatically set at runtime)"
-	return ""
 
 func _ready() -> void:
-	for c in get_children():
-		if c is VisibilityNotifier:
-			visibility_notifier = c
-			var _err := visibility_notifier.connect("camera_entered", self, "_on_VisibilityNotifier_camera_entered")
-			_err = visibility_notifier.connect("camera_exited", self, "_on_VisibilityNotifier_camera_exited")
-			break
-	
 	# Configure collision box
 	var aabb: AABB = get_aabb()
-	collision_check_box = BoxShape.new()
+	collision_check_box = BoxShape3D.new()
 	collision_check_box.extents = aabb.size * 0.5
 	
 	# configure collision check param
-	collision_check_param = PhysicsShapeQueryParameters.new()
+	collision_check_param = PhysicsShapeQueryParameters3D.new()
 	collision_check_param.collision_mask = collision_mask
 	collision_check_param.margin = 0.1
 	collision_check_param.shape_rid = collision_check_box.get_rid()
@@ -543,9 +541,6 @@ func _physics_process(delta: float) -> void:
 		_verlet_process(delta * float(Engine.iterations_per_second / simulation_rate))
 		_apply_constraints()
 	
-	if visibility_notifier != null:
-		visibility_notifier.aabb = get_aabb()
-
 	# drawing
 	if draw:
 		_calculate_rope_orientation_with_camera()
@@ -558,10 +553,10 @@ func _physics_process(delta: float) -> void:
 		#_draw_linear_curve()
 		#_draw_rope_particles()
 
-func _on_VisibilityNotifier_camera_exited(_camera: Camera) -> void:
+func _on_VisibilityNotifier_camera_exited(_camera: Camera3D) -> void:
 	#simulate = false
 	draw = false
 
-func _on_VisibilityNotifier_camera_entered(_camera: Camera) -> void:
+func _on_VisibilityNotifier_camera_entered(_camera: Camera3D) -> void:
 	#simulate = true
 	draw = true
