@@ -12,12 +12,12 @@ _global_script_classes=[ {
 "base": "Position3D",
 "class": "DbgCamera",
 "language": "GDScript",
-"path": "res://DbgCamera/DbgCamera.gd"
+"path": "res://verlet_rope/debug_camera/debug_camera.gd"
 }, {
 "base": "ImmediateGeometry",
 "class": "GDVerletRope",
 "language": "GDScript",
-"path": "res://VerletRope/verlet_rope.gd"
+"path": "res://addons/rope/verlet_rope.gd"
 } ]
 _global_script_class_icons={
 "DbgCamera": "",
@@ -27,12 +27,12 @@ _global_script_class_icons={
 [application]
 
 config/name="godot-verlet-rope"
-run/main_scene="res://TestScenes/RopeTest.tscn"
+run/main_scene="res://verlet_rope/test_scenes/rope_test.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
-DbgStats="*res://DbgStats/DbgStats.tscn"
+DbgStats="*res://verlet_rope/debug_stats/debug_stats.tscn"
 
 [input]
 
