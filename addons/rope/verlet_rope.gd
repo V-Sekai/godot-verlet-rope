@@ -1,7 +1,9 @@
 @tool
-extends ImmediateMesh
-class_name GDVerletRope
+extends MeshInstance3D
+class_name Rope3D
 
+func _enter_tree():
+	set_mesh(ImmediateMesh.new())
 
 class RopeParticleData:
 	var pos_curr: PackedVector3Array
@@ -109,8 +111,7 @@ const COS_25_DEG: float = cos(deg2rad(25))
 const COS_30_DEG: float = cos(deg2rad(30))
 
 @export var attach_start: bool = true:
-	set(value):
-		set_attach_start(value)
+	set = set_attach_start
 		
 func set_attach_start(value: bool) -> void:
 	attach_start = value
@@ -118,8 +119,7 @@ func set_attach_start(value: bool) -> void:
 		particle_data.is_attached[0] = value
 
 @export var attach_end_to: NodePath:
-	set(value):
-		set_attach_end_to(value)
+	set = set_attach_end_to
 		
 func set_attach_end_to(val: NodePath) -> void:
 	attach_end_to = val 
@@ -172,12 +172,12 @@ func set_simulation_particles(val: int) -> void:
 @export var apply_collision: bool = false
 @export_enum(LAYERS_3D_PHYSICS) var collision_mask: int = 1
 
+@onready var space_state = get_world_3d().direct_space_state
+
 var time: float = 0.0
 var particle_data: RopeParticleData
 var collision_check_param: PhysicsShapeQueryParameters3D
 var collision_check_box: BoxShape3D
-
-@onready var space_state = PhysicsDirectSpaceState3D.new()
 
 func get_segment_length() -> float:
 	return rope_length / (simulation_particles - 1)
@@ -209,7 +209,7 @@ func add_particle_at_end(adjust_length: bool) -> void:
 
 # unused func draws simple lines between particles
 func _draw_linear_curve():
-	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in range(simulation_particles - 1):
 		var curr_pos: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var curr_binorm: Vector3 = particle_data.binormals[i]
@@ -225,7 +225,7 @@ func _draw_linear_curve():
 			-curr_binorm, particle_data.tangents[i], 
 			0.0, 1.0,
 			Color.BLACK)
-	suface_end()
+	mesh.suface_end()
 
 func _draw_interval(data: PackedVector3Array, camera_position: Vector3, step: float, tangent: Vector3) -> void:
 	var t: float = 0.0
@@ -252,10 +252,10 @@ func _draw_interval(data: PackedVector3Array, camera_position: Vector3, step: fl
 	pass
 
 func _draw_catmull_curve_baked() -> void:
-	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	
 	# do drawing
-	var camera = get_viewport().get_camera()
+	var camera = get_viewport().get_camera_3d()
 	var camera_position: Vector3 = camera.global_transform.origin if camera else Vector3.ZERO
 	
 	for i in range(0, simulation_particles - 1):
@@ -291,14 +291,14 @@ func _draw_catmull_curve_baked() -> void:
 			interval_data = catmull_interpolate_in_step_one(p0, p1, p2, p3)
 		
 		_draw_interval(interval_data, camera_position, rope_draw_subdivs, particle_data.tangents[i])
-	surface_end()
+	mesh.surface_end()
 
 # unused func use catmull_curve_baked instead, it is faster
 func _draw_catmull_curve() -> void:
-	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	
 	# do drawing
-	var camera = get_viewport().get_camera()
+	var camera = get_viewport().get_camera_3d()
 	var camera_position: Vector3 = camera.global_transform.origin if camera else Vector3.ZERO
 	
 	for i in range(0, simulation_particles - 1):
@@ -346,10 +346,10 @@ func _draw_catmull_curve() -> void:
 				t, t + step,
 				Color.BLACK)
 			t += step
-	surface_end()
+	mesh.surface_end()
 
 func _calculate_rope_orientation_with_camera() -> void:
-	var camera: Camera3D = get_viewport().get_camera()
+	var camera: Camera3D = get_viewport().get_camera_3d()
 	var camera_pos: Vector3 = camera.global_transform.origin if camera else Vector3.ZERO
 	particle_data.tangents[0] = (particle_data.pos_curr[1] - particle_data.pos_curr[0]).normalized()
 	particle_data.normals[0] = (particle_data.pos_curr[0] - camera_pos).normalized()
@@ -402,7 +402,7 @@ func _destroy_rope() -> void:
 	simulation_particles = 0
 
 func _draw_rope_particles() -> void:
-	surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in range(simulation_particles):
 		var pos_curr: Vector3 = particle_data.pos_curr[i] - global_transform.origin
 		var tangent: Vector3 = particle_data.tangents[i]
@@ -410,38 +410,38 @@ func _draw_rope_particles() -> void:
 		var binormal: Vector3 = particle_data.binormals[i]
 		
 		#material_override.set("vertex_color_use_as_albedo", true)
-		#set_color(Color.red)
-		add_vertex(pos_curr)
-		add_vertex(pos_curr + 0.3 * tangent)
+		#surface_set_color(Color.red)
+		mesh.surface_add_vertex(pos_curr)
+		mesh.surface_add_vertex(pos_curr + 0.3 * tangent)
 		
-		#set_color(Color.green)
-		add_vertex(pos_curr)
-		add_vertex(pos_curr + 0.3 * normal)
+		#surface_set_color(Color.green)
+		mesh.surface_add_vertex(pos_curr)
+		mesh.surface_add_vertex(pos_curr + 0.3 * normal)
 		
-		#set_color(Color.blue)
-		add_vertex(pos_curr)
-		add_vertex(pos_curr + 0.3 * binormal)
+		#surface_set_color(Color.blue)
+		mesh.surface_add_vertex(pos_curr)
+		mesh.surface_add_vertex(pos_curr + 0.3 * binormal)
 		#material_override.set("vertex_color_use_as_albedo", false)
-	surface_end()
+	mesh.surface_end()
 
 # give in clockwise order, or maybe anticlockwise?
 func _draw_quad(vs: Array, n: Vector3, _t: Vector3, uvx0: float, uvx1: float, c: Color) -> void:
-	set_color(c)
-	set_normal(n)
+	mesh.surface_set_color(c)
+	mesh.surface_set_normal(n)
 	# for normal mapping???
 	# set_tangent(Plane(-t, 0.0))
-	set_uv(Vector2(uvx0, 0.0))
-	add_vertex(vs[0])
-	set_uv(Vector2(uvx1, 0.0))
-	add_vertex(vs[1])
-	set_uv(Vector2(uvx1, 1.0))
-	add_vertex(vs[2])
-	set_uv(Vector2(uvx0, 0.0))
-	add_vertex(vs[0])
-	set_uv(Vector2(uvx1, 1.0))
-	add_vertex(vs[2])
-	set_uv(Vector2(uvx0, 1.0))
-	add_vertex(vs[3])
+	mesh.surface_set_uv(Vector2(uvx0, 0.0))
+	mesh.surface_add_vertex(vs[0])
+	mesh.surface_set_uv(Vector2(uvx1, 0.0))
+	mesh.surface_add_vertex(vs[1])
+	mesh.surface_set_uv(Vector2(uvx1, 1.0))
+	mesh.surface_add_vertex(vs[2])
+	mesh.surface_set_uv(Vector2(uvx0, 0.0))
+	mesh.surface_add_vertex(vs[0])
+	mesh.surface_set_uv(Vector2(uvx1, 1.0))
+	mesh.surface_add_vertex(vs[2])
+	mesh.surface_set_uv(Vector2(uvx0, 1.0))
+	mesh.surface_add_vertex(vs[3])
 
 func _apply_forces() -> void:
 	for i in range(simulation_particles):
@@ -522,12 +522,12 @@ func _ready() -> void:
 	_create_rope()
 
 func _physics_process(delta: float) -> void:
-	if Engine.editor_hint and (particle_data == null or particle_data.is_empty()):
+	if Engine.is_editor_hint() and (particle_data == null or particle_data.is_empty()):
 		_create_rope()
 	
 	time += delta
 	
-	if Engine.get_physics_frames() % int(Engine.iterations_per_second / simulation_rate) != 0:
+	if Engine.get_physics_frames() % int(Engine.physics_ticks_per_second / simulation_rate) != 0:
 		return
 		
 	# make the end follow the end attached object or stay at its attached location
@@ -538,7 +538,7 @@ func _physics_process(delta: float) -> void:
 
 	if simulate:
 		_apply_forces()
-		_verlet_process(delta * float(Engine.iterations_per_second / simulation_rate))
+		_verlet_process(delta * float(Engine.physics_ticks_per_second / simulation_rate))
 		_apply_constraints()
 	
 	# drawing
@@ -547,7 +547,7 @@ func _physics_process(delta: float) -> void:
 		# @HACK: rope doesnt draw from origin to attach_end_to correctly if rotated
 		# calling to_local() in the drawing code is too slow
 		global_transform.basis = Basis.IDENTITY
-		clear()
+		mesh.clear_surfaces()
 		_draw_catmull_curve_baked()
 		#_draw_catmull_curve()
 		#_draw_linear_curve()
