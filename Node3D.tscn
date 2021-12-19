@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://c65cr52ys7spa"]
+
+[ext_resource type="PackedScene" path="res://addons/rope/verlet_rope.tscn" id="1_ywedt"]
+[ext_resource type="Material" uid="uid://b7i0e8j2roabl" path="res://addons/rope/cable_material.tres" id="2_68k24"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_gitj7"]
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_482cn"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="VerletRope" parent="." instance=ExtResource( "1_ywedt" )]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05748, 0, 0)
+mesh = SubResource( "BoxMesh_gitj7" )
+surface_material_override/0 = null
+script = null
+
+[node name="VerletRope2" parent="." instance=ExtResource( "1_ywedt" )]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.28215, 0, 0)
+material_override = ExtResource( "2_68k24" )
+mesh = SubResource( "ImmediateMesh_482cn" )
+surface_material_override/0 = null
+attach_end_to = NodePath("../VerletRope")
+rope_width = 1.0
