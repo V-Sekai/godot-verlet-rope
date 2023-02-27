@@ -1,10 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://dhwm3j8dj7vlk"]
 
-[ext_resource type="PackedScene" path="res://addons/rope/verlet_rope.tscn" id="1_yqfdf"]
+[ext_resource type="PackedScene" uid="uid://djp54qk551qsw" path="res://addons/rope/verlet_rope.tscn" id="1_yqfdf"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_kvnvy"]
-top_radius = 0.5
-bottom_radius = 0.5
 height = 1.0
 
 [sub_resource type="ImmediateMesh" id="ImmediateMesh_kejhl"]
@@ -13,11 +11,9 @@ height = 1.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.995919, -0.0902502, 0, 0.0902502, -0.995919, -2.22278, 0, 0)
-mesh = SubResource( "CylinderMesh_kvnvy" )
-surface_material_override/0 = null
+mesh = SubResource("CylinderMesh_kvnvy")
 
-[node name="VerletRope" parent="." instance=ExtResource( "1_yqfdf" )]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.67505, 0.674407, 0)
-mesh = SubResource( "ImmediateMesh_kejhl" )
-surface_material_override/0 = null
+[node name="VerletRope" parent="." instance=ExtResource("1_yqfdf")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.330834, 0.332506, -0.54211)
+mesh = SubResource("ImmediateMesh_kejhl")
 attach_end_to = NodePath("../MeshInstance3D")

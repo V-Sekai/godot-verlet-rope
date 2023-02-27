@@ -104,12 +104,12 @@ static func catmull_interpolate(p0: Vector3, p1: Vector3, p2: Vector3, p3: Vecto
 # https://toqoz.fyi/game-rope.html
 
 const INV_SQRT_2: float = 1.0 / sqrt(2.0)
-const COS_5_DEG: float = cos(deg2rad(5))
-const COS_10_DEG: float = cos(deg2rad(10))
-const COS_15_DEG: float = cos(deg2rad(15))
-const COS_20_DEG: float = cos(deg2rad(20))
-const COS_25_DEG: float = cos(deg2rad(25))
-const COS_30_DEG: float = cos(deg2rad(30))
+const COS_5_DEG: float = cos(deg_to_rad(5))
+const COS_10_DEG: float = cos(deg_to_rad(10))
+const COS_15_DEG: float = cos(deg_to_rad(15))
+const COS_20_DEG: float = cos(deg_to_rad(20))
+const COS_25_DEG: float = cos(deg_to_rad(25))
+const COS_30_DEG: float = cos(deg_to_rad(30))
 
 @export var attach_start: bool = true:
 	set = set_attach_start
@@ -163,7 +163,7 @@ func set_simulation_particles(val: int) -> void:
 @export var gravity_scale: float = 1.0
 
 @export var apply_wind: bool = false
-@export var wind_noise: OpenSimplexNoise
+@export var wind_noise: FastNoiseLite
 @export var wind: Vector3 = Vector3(1.0, 0.0, 0.0)
 @export var wind_scale: float = 10.0
 
@@ -171,7 +171,7 @@ func set_simulation_particles(val: int) -> void:
 @export var damping_factor: float = 100.0
 
 @export var apply_collision: bool = false
-@export_enum(LAYERS_3D_PHYSICS) var collision_mask: int = 1
+@export_enum("LAYERS_3D_PHYSICS") var collision_mask: int = 1
 
 @export var default_material : BaseMaterial3D = preload("res://addons/rope/rope_material.tres")
 
