@@ -2,6 +2,36 @@
 extends MeshInstance3D
 class_name Rope3D
 
+## A fast implementation of verlet integration based rope physics, similar to the one seen in Half-Life 2.
+##
+## Creating ropes in code:
+## [codeblock]
+### instance and add rope to scene
+##var rope = load('<path to GDVerletRope.gd>').instance()
+##add_child(rope)
+##
+### set its params
+##rope.preprocess_iterations = 0
+##rope.stiffness = 1.0
+##rope.rope_width = 0.02
+##rope.transform.origin = Vector3.ZERO
+##rope.attach_end_to = end_node.get_path()
+##rope.rope_length = 6.0
+##rope.simulation_particles = 7
+##var wind_noise = FastNoiseLite.new()
+##wind_noise.fractal_octaves = 1
+##wind_noise.frequency = 0.04
+##wind_noise.fractal_gain = 1.0
+##rope.wind_noise = wind_noise
+##rope.wind = Vector3.RIGHT
+##rope.wind_scale = 5.0
+## [/codeblock]
+## References: [br]
+## [kbd]https://docs.unrealengine.com/4.26/en-US/Basics/Components/Rendering/CableComponent/[/kbd][br]
+## [kbd]https://owlree.blog/posts/simulating-a-rope.html[/kbd][br]
+## [kbd]https://qroph.github.io/2018/07/30/smooth-paths-using-catmull-rom-splines.html[/kbd][br]
+## [kbd]https://toqoz.fyi/game-rope.html[/kbd][br]
+
 func _enter_tree():
 	if not get_mesh():
 		set_mesh(ImmediateMesh.new())
@@ -111,6 +141,7 @@ const COS_20_DEG: float = cos(deg_to_rad(20))
 const COS_25_DEG: float = cos(deg_to_rad(25))
 const COS_30_DEG: float = cos(deg_to_rad(30))
 
+## Attach/detach the start point.
 @export var attach_start: bool = true:
 	set = set_attach_start
 		
@@ -119,7 +150,8 @@ func set_attach_start(value: bool) -> void:
 	if particle_data:
 		particle_data.is_attached[0] = value
 
-@export var attach_end_to: NodePath:
+## Attach end to any another [Node3D] by [NodePath].
+@export_node_path var attach_end_to: NodePath:
 	set = set_attach_end_to
 		
 func set_attach_end_to(val: NodePath) -> void:
@@ -136,9 +168,18 @@ func is_attached_end() -> bool:
 func is_attached_start() -> bool:
 	return attach_start
 
-@export var rope_length: float = 5.0
-@export var rope_width : float = 0.07
- 
+## Length of the rope in meters.
+@export_range(0.0, 40.0, 0.001, "or_greater", "suffix:m") var rope_length: float = 5.0
+## Width of the rope in meters.
+@export_range(0.0, 4.0, 0.001, "or_greater", "suffix:m") var rope_width : float = 0.07
+
+## Rope material.
+@export var default_material : BaseMaterial3D = preload("res://addons/rope/rope_material.tres") 
+
+@export_group("Simulation")
+## Number of particles to simulate the rope. [br]
+## Odd number (greater than 3) is recommended for ropes attached on both sides
+## for a smoother rope at its lowest point.
 @export_range(3, 200) var simulation_particles: int = 9:
 	set(value):
 		set_simulation_particles(value)
@@ -149,31 +190,60 @@ func set_simulation_particles(val: int) -> void:
 		particle_data.resize(simulation_particles)
 		_create_rope()
 
+## Number of verlet constraint iterations per frame. [br]
+## Higher value gives accurate rope simulation for lengthy and ropes with many simulation particles.
+## Increase if you find the rope is sagging or stretching too much.
 @export var iterations: int = 2 # low value = more sag, high value = less sag
+## Number of iterations to be precalculated in _ready() to set the rope in a rest position.
+## Value of 20-30 should be enough.
 @export_range(0, 120) var preprocess_iterations: int = 5
+## Rate of simulation. Lower the value if the rope is not going to move a lot or it is far away.
 @export_range(10, 60) var simulation_rate: int = 60
+## Should be named elasticity.
+## It is a fraction that controls how much the verlet constraint corrects the rope.
+## Value from 0.1 to 1.0 is recommended.
 @export_range(0.01, 1.5) var stiffness = 0.9 # low value = elastic, high value = taut rope
 
+## On/off the simulation.
 @export var simulate: bool = true
+## On/off the drawing. You will still see the rope because [method ImmediateMesh.clear_surfaces] wasnt called,
+## but the rope isn't being drawn every frame.
 @export var draw: bool = true
+## Does Catmull–Rom spline smoothing (for required segments) at distances less than this.
 @export var subdiv_lod_distance = 15.0 # switches to only drawing quads between particles at this point
 
+@export_group("Gravity")
+## On/off gravity.
 @export var apply_gravity: bool = true
-@export var gravity: Vector3 = Vector3.DOWN * 9.8
+## Gravity vector.
+@export var gravity: Vector3 = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8) * \
+	ProjectSettings.get_setting("physics/3d/default_gravity_vector", Vector3.DOWN)
+## A factor to scale the gravity vector.
 @export var gravity_scale: float = 1.0
 
+@export_group("Wind")
+## On/off wind.
 @export var apply_wind: bool = false
-@export var wind_noise: FastNoiseLite
+## [Noise] resource for the wind. Noise frequency controls the turbulence (kinda).
+## Save resource to disk and share across ropes for a global wind setting.
+@export var wind_noise: Noise
+## The wind vector. 
 @export var wind: Vector3 = Vector3(1.0, 0.0, 0.0)
+## A factor to scale the wind vector.
 @export var wind_scale: float = 10.0
 
+@export_group("Damping")
+## On/off air drag/damping. Sometimes helps when rope bugs out to bring it back to rest.
 @export var apply_damping: bool = true
+## Amount of damping.
 @export var damping_factor: float = 100.0
 
+@export_group("Collisions")
+## On/off collision with bodies. Collisions work best on smooth surfaces without sharp edges.
+## Collisions are checked only when a body enters the ropes [AABB].
 @export var apply_collision: bool = false
-@export_enum("LAYERS_3D_PHYSICS") var collision_mask: int = 1
-
-@export var default_material : BaseMaterial3D = preload("res://addons/rope/rope_material.tres")
+## The collision mask to be used for collisions.
+@export_flags_3d_physics var collision_mask: int = 1
 
 @onready var space_state = get_world_3d().direct_space_state
 
